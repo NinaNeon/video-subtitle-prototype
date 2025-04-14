@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>用影片學英文 Prototype</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 16px;
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    #loginButton {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #main {
+      flex: 1;
+      display: flex;
+    }
+    #leftPanel {
+      flex: 3;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    #rightPanel {
+      flex: 1;
+      border-left: 1px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+    #videoInput {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    #videoInput input {
+      flex: 1;
+      padding: 8px;
+      font-size: 1em;
+    }
+    #videoFrame {
+      width: 100%;
+      height: 360px;
+      margin-bottom: 16px;
+    }
+    #subtitleBox {
+      background-color: #222;
+      color: #fff;
+      padding: 12px;
+      font-size: 1.2em;
+      text-align: center;
+      border-radius: 6px;
+    }
+    .word {
+      cursor: pointer;
+      color: #00e5ff;
+    }
+    .word:hover {
+      text-decoration: underline;
+    }
+    .card {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>用影片學英文 Prototype</h1>
+    <button id="loginButton" onclick="mockLogin()">模擬 Google 登入</button>
+  </header>
+
+
+  <div id="main">
+    <div id="leftPanel">
+      <div id="videoInput">
+        <input type="text" id="youtubeLink" placeholder="貼上 YouTube 連結" />
+        <button onclick="loadVideo()">載入影片</button>
+      </div>
+      <iframe id="videoFrame" src="" frameborder="0" allowfullscreen></iframe>
+      <div id="subtitleBox"></div>
+    </div>
+    <div id="rightPanel">
+      <h3>字卡區</h3>
+      <div id="cards"></div>
+    </div>
+  </div>
+
+
+  <script>
+    let isLoggedIn = false;
+    const fakeSubtitles = [
+      {
+        sentence: "Welcome to our English learning video.",
+        translation: "歡迎來到我們的英文學習影片。",
+        words: {
+          Welcome: "歡迎",
+          English: "英文",
+          learning: "學習",
+          video: "影片"
+        }
+      },
+      {
+        sentence: "This method helps you learn vocabulary naturally.",
+        translation: "這個方法幫助你自然地學習詞彙。",
+        words: {
+          method: "方法",
+          helps: "幫助",
+          vocabulary: "詞彙",
+          naturally: "自然地"
+        }
+      }
+    ];
+
+    function mockLogin() {
+      isLoggedIn = true;
+      document.getElementById("loginButton").innerText = "已登入 User";
+    }
+
+    function loadVideo() {
+      const link = document.getElementById("youtubeLink").value;
+      const videoId = extractYouTubeID(link);
+      const videoFrame = document.getElementById("videoFrame");
+      const subtitleBox = document.getElementById("subtitleBox");
+      const cards = document.getElementById("cards");
+
+      if (!videoId) {
+        alert("請輸入有效的 YouTube 連結。");
+        return;
+      }
+
+      videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      subtitleBox.innerText = "";
+      cards.innerHTML = "";
+
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < fakeSubtitles.length) {
+          renderSubtitle(fakeSubtitles[index]);
+          index++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 5000);
+    }
+
+    function renderSubtitle(sub) {
+      const subtitleBox = document.getElementById("subtitleBox");
+      subtitleBox.innerHTML = "";
+      const sentenceSpan = document.createElement("span");
+      sentenceSpan.style.marginRight = "10px";
+      sentenceSpan.style.cursor = "pointer";
+      sentenceSpan.onclick = () => addSentenceCard(sub.sentence, sub.translation);
+
+      const words = sub.sentence.split(" ").map(word => {
+        const cleanWord = word.replace(/[^a-zA-Z]/g, "");
+        if (sub.words[cleanWord]) {
+          return `<span class='word' onclick='addWordCard("${cleanWord}", "${sub.words[cleanWord]}")'>${word}</span>`;
+        } else {
+          return word;
+        }
+      }).join(" ");
+
+      sentenceSpan.innerHTML = words;
+      subtitleBox.appendChild(sentenceSpan);
+    }
+
+    function addWordCard(word, translation) {
+      if (!isLoggedIn) {
+        alert("請先登入才能儲存字卡。");
+        return;
+      }
+      const cards = document.getElementById("cards");
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `<strong>${word}</strong><br/><em>${translation}</em>`;
+      cards.appendChild(card);
+    }
+
+    function addSentenceCard(sentence, translation) {
+      if (!isLoggedIn) {
+        alert("請先登入才能儲存字卡。");
+        return;
+      }
+      const cards = document.getElementById("cards");
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `<strong>${sentence}</strong><br/><em>${translation}</em>`;
+      cards.appendChild(card);
+    }
+
+    function extractYouTubeID(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      return match && match[2].length == 11 ? match[2] : null;
+    }
+  </script>
+
+
+</body>
+</html>
